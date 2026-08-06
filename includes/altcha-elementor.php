@@ -33,16 +33,20 @@ add_action('elementor_pro/forms/fields/register', function ($registrar) {
 
     public function validation($field, $record, $ajax_handler)
     {
+      $form_id = $record->get_form_settings('id');
       if (empty($field['value'])) {
+        altcha_custom_log('bot', 'elementor', $form_id, 'missing_payload');
         $ajax_handler->add_error($field['id'], __('Please verify that you are human.', 'plugin-altcha-custom'));
         return;
       }
       // verify() fatals if $params is null (Altcha 3.2.0 bug).
       $params = [];
       if (!\AltchaPlugin::$instance->verify($field['value'], $params)) {
+        altcha_custom_log('failed', 'elementor', $form_id, 'invalid_payload');
         $ajax_handler->add_error($field['id'], __('Captcha verification failed, please try again.', 'plugin-altcha-custom'));
         return;
       }
+      altcha_custom_log('verified', 'elementor', $form_id);
       $record->remove_field($field['id']);
     }
   });

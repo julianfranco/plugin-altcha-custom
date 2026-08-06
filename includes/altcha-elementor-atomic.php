@@ -41,14 +41,18 @@ $altcha_atomic_gate = function () {
       break;
     }
   }
+  $form_id = isset($_POST['form_id']) ? sanitize_text_field(wp_unslash($_POST['form_id'])) : null;
   if (empty($payload)) {
+    altcha_custom_log('bot', 'elementor-atomic', $form_id, 'missing_payload');
     wp_send_json_error(['message' => __('Please verify that you are human.', 'plugin-altcha-custom')]);
   }
   // verify() fatals if $params is null (Altcha 3.2.0 bug).
   $params = [];
   if (!\AltchaPlugin::$instance->verify($payload, $params)) {
+    altcha_custom_log('failed', 'elementor-atomic', $form_id, 'invalid_payload');
     wp_send_json_error(['message' => __('Captcha verification failed, please try again.', 'plugin-altcha-custom')]);
   }
+  altcha_custom_log('verified', 'elementor-atomic', $form_id);
 };
 add_action('wp_ajax_elementor_pro_atomic_forms_send_form', $altcha_atomic_gate, 1);
 add_action('wp_ajax_nopriv_elementor_pro_atomic_forms_send_form', $altcha_atomic_gate, 1);
