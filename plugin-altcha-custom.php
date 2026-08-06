@@ -6,3 +6,5 @@
  * Author:           Evan BOMBART
  * Requires Plugins: altcha
  */
+
+require_once __DIR__ . '/includes/altcha-default.php';
