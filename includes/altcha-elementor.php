@@ -37,7 +37,10 @@ add_action('elementor_pro/forms/fields/register', function ($registrar) {
         $ajax_handler->add_error($field['id'], __('Please verify that you are human.', 'plugin-altcha-custom'));
         return;
       }
-      if (!\AltchaPlugin::$instance->verify($field['value'])) {
+      // Always pass $params: verify() forwards it to parse_payload() which
+      // rejects null, a fatal TypeError in the official plugin (v3.2.0).
+      $params = [];
+      if (!\AltchaPlugin::$instance->verify($field['value'], $params)) {
         $ajax_handler->add_error($field['id'], __('Captcha verification failed, please try again.', 'plugin-altcha-custom'));
         return;
       }
