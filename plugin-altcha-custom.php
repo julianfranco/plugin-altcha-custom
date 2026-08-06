@@ -12,3 +12,4 @@ if (!defined('ABSPATH')) exit;
 require_once __DIR__ . '/includes/altcha-default.php';
 require_once __DIR__ . '/includes/altcha-elementor.php';
 require_once __DIR__ . '/includes/altcha-elementor-atomic.php';
+require_once __DIR__ . '/includes/altcha-custom-forms.php';
