@@ -20,9 +20,12 @@ function altcha_custom_verify(?string $payload = null): bool {
     $payload = isset($_POST['altcha']) ? wp_unslash($_POST['altcha']) : '';
   }
   if (!is_string($payload) || $payload === '') {
+    altcha_custom_log('bot', 'custom', null, 'missing_payload');
     return false;
   }
   // verify() fatals if $params is null (Altcha 3.2.0 bug).
   $params = [];
-  return \AltchaPlugin::$instance->verify($payload, $params);
+  $verified = \AltchaPlugin::$instance->verify($payload, $params);
+  altcha_custom_log($verified ? 'verified' : 'failed', 'custom', null, $verified ? null : 'invalid_payload');
+  return $verified;
 }
