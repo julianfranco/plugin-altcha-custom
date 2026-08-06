@@ -7,4 +7,6 @@
  * Requires Plugins: altcha
  */
 
+if (!defined('ABSPATH')) exit;
+
 require_once __DIR__ . '/includes/altcha-default.php';
