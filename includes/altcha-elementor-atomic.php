@@ -14,19 +14,22 @@ add_filter('elementor/widget/render_content', function ($content, $widget) {
   static $js_added = false;
   if (!$js_added) {
     $js_added = true;
+    // Capture phase: statechange does not bubble, and widgets may appear later (popups).
     wp_add_inline_script('altcha-widget', <<<'JS'
-document.querySelectorAll('[data-element_type="e-form"] altcha-widget').forEach((w) => {
-  w.addEventListener('statechange', (e) => {
-    if (e.detail.state !== 'verified') return;
-    w.closest('form').querySelector('input[data-interaction-id="altcha"]').setAttribute('value', e.detail.payload);
-  });
-});
+document.addEventListener('statechange', (e) => {
+  const w = e.target;
+  if (w.tagName !== 'ALTCHA-WIDGET' || e.detail.state !== 'verified') return;
+  const mirror = w.parentElement?.querySelector('input[data-interaction-id="altcha"]')
+    ?? w.closest('form')?.querySelector('input[data-interaction-id="altcha"]');
+  // setAttribute survives the form.reset() Elementor runs after success.
+  if (mirror) mirror.setAttribute('value', e.detail.payload);
+}, true);
 JS);
   }
   return $html . $content;
 }, 10, 2);
 
-// Verify the ALTCHA payload before the atomic form handler runs (priority 1).
+// Verify the ALTCHA payload before the atomic form handler, after the rate limit.
 $altcha_atomic_gate = function () {
   if (!class_exists('AltchaPlugin')) {
     return;
@@ -36,8 +39,11 @@ $altcha_atomic_gate = function () {
   foreach ($fields as $i => $field) {
     if (($field['id'] ?? '') === 'altcha') {
       $payload = wp_unslash($field['value'] ?? '');
-      // Keep the payload out of emails and submissions.
-      unset($_POST['form_fields'][$i]);
+      // Keep the payload out of emails and submissions. Disable this filter if another
+      // consumer of elementor_pro/atomic_forms/spam_check needs to read the field.
+      if (apply_filters('altcha_custom_strip_payload', true)) {
+        unset($_POST['form_fields'][$i]);
+      }
       break;
     }
   }
@@ -54,5 +60,5 @@ $altcha_atomic_gate = function () {
   }
   altcha_custom_log('verified', 'elementor-atomic', $form_id);
 };
-add_action('wp_ajax_elementor_pro_atomic_forms_send_form', $altcha_atomic_gate, 1);
-add_action('wp_ajax_nopriv_elementor_pro_atomic_forms_send_form', $altcha_atomic_gate, 1);
+add_action('wp_ajax_elementor_pro_atomic_forms_send_form', $altcha_atomic_gate, 5);
+add_action('wp_ajax_nopriv_elementor_pro_atomic_forms_send_form', $altcha_atomic_gate, 5);
