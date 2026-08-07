@@ -2,13 +2,24 @@
 
 if (!defined('ABSPATH')) exit;
 
+// Resolve the client IP without trusting a header the client controls.
+// AltchaPlugin::get_ip_address() returns the first X-Forwarded-For entry as soon as
+// trustedProxies is empty (its default), which makes any limit bypassable by header.
+function altcha_custom_client_ip(): string {
+  $trusted = \AltchaPlugin::$instance->get_settings('trustedProxies', array());
+  if (empty($trusted)) {
+    return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+  }
+  return (string) \AltchaPlugin::$instance->get_ip_address();
+}
+
 // Throttle a bucket per IP, reusing the official (license-free) rate_limit method.
 function altcha_custom_rate_limit(string $bucket, int $limit, int $window): bool {
   if (!class_exists('AltchaPlugin')) {
     return true;
   }
   $plugin = \AltchaPlugin::$instance;
-  $result = $plugin->rate_limit($limit, $window, $bucket . '|' . $plugin->get_ip_address());
+  $result = $plugin->rate_limit($limit, $window, $bucket . '|' . altcha_custom_client_ip());
   if (!headers_sent()) {
     header('X-RateLimit-Limit: ' . $limit);
     header('X-RateLimit-Remaining: ' . $result['remaining']);
