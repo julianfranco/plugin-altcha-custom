@@ -15,7 +15,7 @@ Un fichier = une feature, dans `includes/` :
 
 | Fichier | Feature |
 |---|---|
-| `altcha-default.php` | Force les 4 protections WordPress gratuites (connexion, inscription, réinitialisation de mot de passe, commentaires), la difficulté du proof-of-work sur `high`, et la langue du widget d'après `get_locale()`. Rien n'est écrit en base. |
+| `altcha-default.php` | Force les 4 protections WordPress gratuites (connexion, inscription, réinitialisation de mot de passe, commentaires), la difficulté du proof-of-work sur `high`, et la langue du widget d'après `get_locale()`. Appliqué à la lecture, par filtre (voir la note sur la persistance). |
 | `altcha-elementor.php` | Ajoute un type de champ **ALTCHA** dans le form builder Elementor Pro (opt-in par formulaire, validation serveur, payload exclu des emails). |
 | `altcha-elementor-atomic.php` | Protège les formulaires atomiques de l'Editor V4 (`e-form`) : widget injecté avant le bouton submit + validation serveur avant le handler Elementor. |
 | `altcha-custom-forms.php` | Helpers pour les formulaires codés main : `altcha_custom_widget()` et `altcha_custom_verify()`. |
@@ -70,6 +70,7 @@ add_action('wp_ajax_nopriv_mon_action', function () {
 - Les hooks sur l'action ajax atomique ont des priorités explicites — rate limit à 1, vérification à 5 — pour ne pas dépendre de l'ordre des `require_once`.
 - L'événement `statechange` du widget **ne remonte pas** (`bubbles: false`) : le miroir JS écoute en phase de capture, ce qui couvre aussi les formulaires injectés après le chargement (popups).
 - Un réglage forcé (protections, `powComplexity`, langue) modifié dans l'admin ALTCHA sera enregistré en base mais restera sans effet, écrasé par le filtre à la lecture.
+- **Les valeurs forcées finissent par être persistées en base.** Le filtre s'applique à la lecture, mais le plugin officiel relit puis réécrit ses réglages lors de ses migrations (`ensure_default_options()`, déclenchée après chaque mise à jour d'ALTCHA) : les valeurs forcées passent alors par `get_settings()` et sont écrites par `update_option()`. Vérifié en conditions réelles — `powComplexity` passé de `low` à `high` en base après une migration simulée. Conséquences : désactiver ce plugin ne restaure pas les réglages d'origine de l'administrateur, et un site réglé sur `very_high` serait rabaissé à `high`. L'effet est fail-secure (les valeurs forcées vont toutes vers plus de protection), aucun contournement n'en découle.
 - La rétention des événements est plafonnée à 7 jours sans licence Altcha.
 
 ## Tests
