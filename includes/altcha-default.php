@@ -11,3 +11,10 @@ add_filter('altcha_get_settings', function ($settings) {
   $settings['powComplexity'] = 'high';
   return $settings;
 });
+
+// Set the widget language explicitly, instead of relying on <html lang>.
+add_filter('altcha_get_widget_attrs', function ($attrs) {
+  // Bundle keys are lowercase with a hyphen (fr-fr); unknown codes fall back to English.
+  $attrs['language'] ??= strtolower(str_replace('_', '-', get_locale()));
+  return $attrs;
+});
