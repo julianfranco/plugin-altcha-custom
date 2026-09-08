@@ -1,0 +1,10 @@
+/*
+ * Surcharges du widget ALTCHA officiel.
+ * !important requis : altcha.css force `.altcha-checkbox-wrap label { margin: 0 !important }`.
+ */
+
+.altcha .altcha-checkbox-wrap label {
+  /* Décolle le label du logo ALTCHA situé à sa droite. */
+  margin-right: 8px !important;
+  font-size: var(--altcha-font-size, 12px);
+}
