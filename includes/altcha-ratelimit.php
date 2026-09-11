@@ -6,6 +6,9 @@ if (!defined('ABSPATH')) exit;
 // AltchaPlugin::get_ip_address() returns the first X-Forwarded-For entry as soon as
 // trustedProxies is empty (its default), which makes any limit bypassable by header.
 function altcha_custom_client_ip(): string {
+  if (!class_exists('AltchaPlugin') || !isset(\AltchaPlugin::$instance)) {
+    return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+  }
   $trusted = \AltchaPlugin::$instance->get_settings('trustedProxies', array());
   if (empty($trusted)) {
     return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
