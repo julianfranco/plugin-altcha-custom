@@ -21,9 +21,9 @@ function altcha_custom_rate_limit(string $bucket, int $limit, int $window): bool
   $plugin = \AltchaPlugin::$instance;
   $result = $plugin->rate_limit($limit, $window, $bucket . '|' . altcha_custom_client_ip());
   if (!headers_sent()) {
-    header('X-RateLimit-Limit: ' . $limit);
-    header('X-RateLimit-Remaining: ' . $result['remaining']);
-    header('X-RateLimit-Reset-In: ' . $result['reset_in']);
+    header('X-RateLimit-Limit: ' . (int) $limit);
+    header('X-RateLimit-Remaining: ' . (int) $result['remaining']);
+    header('X-RateLimit-Reset-In: ' . (int) $result['reset_in']);
   }
   if ($result['exceeded']) {
     $plugin->log_event('blocked', null, null, 'rate_limit_' . $bucket, null, false, 'ratelimit');
