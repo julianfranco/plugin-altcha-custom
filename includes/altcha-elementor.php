@@ -26,8 +26,9 @@ add_action('elementor_pro/forms/fields/register', function ($registrar) {
       $attrs = $plugin->get_widget_attrs([
         'name' => 'form_fields[' . $item['custom_id'] . ']',
       ]);
+      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_kses_post sanitizes widget HTML
       echo '<div class="elementor-field" id="form-field-' . esc_attr($item['custom_id']) . '">'
-        . $plugin->get_widget_html($attrs)
+        . wp_kses_post($plugin->get_widget_html($attrs))
         . '</div>';
     }
 

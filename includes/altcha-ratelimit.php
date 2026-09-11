@@ -6,6 +6,9 @@ if (!defined('ABSPATH')) exit;
 // AltchaPlugin::get_ip_address() returns the first X-Forwarded-For entry as soon as
 // trustedProxies is empty (its default), which makes any limit bypassable by header.
 function altcha_custom_client_ip(): string {
+  if (!class_exists('AltchaPlugin') || !isset(\AltchaPlugin::$instance)) {
+    return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+  }
   $trusted = \AltchaPlugin::$instance->get_settings('trustedProxies', array());
   if (empty($trusted)) {
     return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
@@ -21,9 +24,9 @@ function altcha_custom_rate_limit(string $bucket, int $limit, int $window): bool
   $plugin = \AltchaPlugin::$instance;
   $result = $plugin->rate_limit($limit, $window, $bucket . '|' . altcha_custom_client_ip());
   if (!headers_sent()) {
-    header('X-RateLimit-Limit: ' . $limit);
-    header('X-RateLimit-Remaining: ' . $result['remaining']);
-    header('X-RateLimit-Reset-In: ' . $result['reset_in']);
+    header('X-RateLimit-Limit: ' . intval($limit));
+    header('X-RateLimit-Remaining: ' . intval($result['remaining']));
+    header('X-RateLimit-Reset-In: ' . intval($result['reset_in']));
   }
   if ($result['exceeded']) {
     $plugin->log_event('blocked', null, null, 'rate_limit_' . $bucket, null, false, 'ratelimit');
@@ -45,7 +48,7 @@ foreach (['elementor_pro_forms_send_form', 'elementor_pro_atomic_forms_send_form
 
 // Throttle challenge requests to 30 per minute and per IP.
 add_filter('rest_pre_dispatch', function ($result, $server, $request) {
-  if (str_contains($request->get_route(), '/altcha/v1/challenge')
+  if (strpos($request->get_route(), '/altcha/v1/challenge') !== false
     && !altcha_custom_rate_limit('challenge', 30, MINUTE_IN_SECONDS)) {
     return new WP_Error('altcha_rate_limited', __('Too many requests.', 'plugin-altcha-custom'), ['status' => 429]);
   }

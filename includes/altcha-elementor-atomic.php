@@ -9,7 +9,8 @@ add_filter('elementor/widget/render_content', function ($content, $widget) {
   }
   $plugin = \AltchaPlugin::$instance;
   // The atomic collector only posts inputs tagged with data-interaction-id.
-  $html = $plugin->get_widget_html($plugin->get_widget_attrs())
+  // Sanitize widget HTML to prevent XSS if parent plugin is compromised.
+  $html = wp_kses_post($plugin->get_widget_html($plugin->get_widget_attrs()))
     . '<input type="hidden" name="altcha" data-interaction-id="altcha" value="">';
   static $js_added = false;
   if (!$js_added) {
