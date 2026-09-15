@@ -17,7 +17,9 @@ function altcha_custom_verify(?string $payload = null): bool {
     return false;
   }
   if ($payload === null) {
-    $payload = isset($_POST['altcha']) ? wp_unslash($_POST['altcha']) : '';
+    // Guard against array injection: $_POST['altcha'] = ['malicious'] bypasses is_string() below.
+    $raw = $_POST['altcha'] ?? '';
+    $payload = is_string($raw) ? wp_unslash($raw) : '';
   }
   if (!is_string($payload) || $payload === '') {
     altcha_custom_log('bot', 'custom', null, 'missing_payload');
