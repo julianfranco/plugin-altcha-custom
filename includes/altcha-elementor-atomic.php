@@ -38,7 +38,8 @@ $altcha_atomic_gate = function () {
   $fields = isset($_POST['form_fields']) && is_array($_POST['form_fields']) ? $_POST['form_fields'] : [];
   foreach ($fields as $i => $field) {
     if (($field['id'] ?? '') === 'altcha') {
-      $payload = wp_unslash($field['value'] ?? '');
+      $raw = $field['value'] ?? '';
+      $payload = is_string($raw) ? wp_unslash($raw) : '';
       // Keep the payload out of emails and submissions. Disable this filter if another
       // consumer of elementor_pro/atomic_forms/spam_check needs to read the field.
       if (apply_filters('altcha_custom_strip_payload', true)) {
@@ -47,7 +48,8 @@ $altcha_atomic_gate = function () {
       break;
     }
   }
-  $form_id = isset($_POST['form_id']) ? sanitize_text_field(wp_unslash($_POST['form_id'])) : null;
+  $raw_form_id = $_POST['form_id'] ?? null;
+  $form_id = is_string($raw_form_id) ? sanitize_text_field(wp_unslash($raw_form_id)) : null;
   if (empty($payload)) {
     altcha_custom_log('bot', 'elementor-atomic', $form_id, 'missing_payload');
     wp_send_json_error(['message' => __('Please verify that you are human.', 'plugin-altcha-custom')]);
