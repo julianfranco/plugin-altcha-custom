@@ -34,7 +34,8 @@ add_action('elementor_pro/forms/fields/register', function ($registrar) {
     public function validation($field, $record, $ajax_handler)
     {
       $form_id = $record->get_form_settings('id');
-      if (empty($field['value'])) {
+      // Guard against array injection: reject non-string payloads early.
+      if (!is_string($field['value'] ?? null) || $field['value'] === '') {
         altcha_custom_log('bot', 'elementor', $form_id, 'missing_payload');
         $ajax_handler->add_error($field['id'], __('Please verify that you are human.', 'plugin-altcha-custom'));
         return;
